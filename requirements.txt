@@ -1,0 +1,17 @@
+imageio
+scipy
+numpy
+matplotlib==3.7.1 # Some MNE plotting does not work with 3.7.2. Should be fixed with 3.7.3
+dicom2nifti
+nibabel
+nilearn
+scikit-learn
+mne
+seaborn
+crtoolbox
+ipywidgets
+pandas
+pyvistaqt
+ndslib
+ipykernel
+pyvista
