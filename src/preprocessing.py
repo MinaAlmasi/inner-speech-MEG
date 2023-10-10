@@ -4,6 +4,8 @@ import mne
 from os.path import join
 import matplotlib.pyplot as plt
 
+import argparse
+
 def load_raw(meg_path, raw_name):
     raw_name = meg_path/raw_name
     raw = mne.io.read_raw_fif(fname=raw_name, preload=True)
@@ -89,6 +91,19 @@ def compute_evoked(epochs, event_id:dict):
         evokeds.append(evoked)
 
     return evokeds 
+
+def input_parse(): 
+    parser=argparse.ArgumentParser(description='Preprocess MEG data')
+
+    # add number of block as arg
+    parser.add_argument('--block', type=int, help='block number')
+
+    # add condition as arg
+    parser.add_argument('--condition', type=str, help='condition')
+
+def get_block(number, condition):
+    '''fix later'''
+    return f"00{number}.{condition}_block{number}"
 
 def main(): 
     # define paths 
