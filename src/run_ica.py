@@ -27,8 +27,7 @@ def main():
         raw.apply_proj()
 
         # do ICA 
-        #ica = mne.preprocessing.ICA(n_components=0.9999, random_state=42, max_iter=3000)
-        ica = mne.preprocessing.ICA(n_components=40, random_state=42, max_iter=800)
+        ica = mne.preprocessing.ICA(n_components=0.9999, random_state=42, max_iter=3000)
 
         # fit ICA
         ica.fit(raw)
