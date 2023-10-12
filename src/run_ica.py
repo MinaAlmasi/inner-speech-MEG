@@ -22,15 +22,19 @@ def main():
         raw.info['bads'] += ['MEG0422']
         raw.drop_channels(raw.info['bads'])
 
+        # crop to remove initial HPI noise and noise at the end of each trial (verified by manually checking raws in run_raw.py)
+        cropped = raw.copy().crop(tmin=10, tmax=365)
+
         # some initial filtering 
-        raw.filter(l_freq=0.1, h_freq=40, n_jobs=4)
-        raw.apply_proj()
+        cropped.filter(l_freq=0.1, h_freq=40, n_jobs=4)
+        cropped.apply_proj()
 
         # do ICA 
-        ica = mne.preprocessing.ICA(n_components=0.9999, random_state=42, max_iter=3000)
+        #ica = mne.preprocessing.ICA(n_components=0.9999, random_state=42, max_iter=3000)
+        ica = mne.preprocessing.ICA(n_components=60, random_state=42, max_iter=800)
 
         # fit ICA
-        ica.fit(raw)
+        ica.fit(cropped)
 
         # plot & save components
         components = ica.plot_components(show=False)
@@ -44,8 +48,8 @@ def main():
             component.savefig(comp_path / f"component_{i}.png")
 
         # apply ICA 
-        raw_copy = raw.copy()
-        ica.apply(raw_copy)
+        cropped_copy = cropped.copy()
+        ica.apply(cropped_copy)
 
         # get sources 
         source_path = path.parents[1] / "plots" / "ICA" / "sources" / name
@@ -57,7 +61,7 @@ def main():
         with mne.viz.use_browser_backend('matplotlib'):
             for start_pick in range(0, ica.n_components_, batch_size):
                 end_pick = min(start_pick + batch_size, ica.n_components_)
-                sources = ica.plot_sources(raw_copy, show=False, show_scrollbars=False, picks=(range(start_pick, end_pick)))
+                sources = ica.plot_sources(cropped_copy, show=False, show_scrollbars=False, picks=(range(start_pick, end_pick)))
                 sources.savefig(source_path / f"sources_{start_pick}_{end_pick}.png")
 
 if __name__ == "__main__":
