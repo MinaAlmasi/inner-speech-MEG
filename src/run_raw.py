@@ -22,9 +22,17 @@ def main():
     # load raw
     raw = mne.io.read_raw(meg_path / recording_names[1] / 'files' / 'other_block1.fif', preload=True)
 
-    # plot raw 
-    raw.filter(l_freq=None, h_freq=30, n_jobs=4) # alters raw in-place
-    mne.viz.plot_raw(raw, duration=10, n_channels=30, scalings="auto", block=True)
+    # pick types
+    raw.pick_types(meg=True, eeg=False, stim=True)
+
+    # filter raws
+    raw.filter(h_freq=40, l_freq = 0.1, n_jobs=4) # alters raw in-place
+
+    # apply projs
+    raw.apply_proj()
+
+    # plot raw
+    mne.viz.plot_raw(raw, duration=20, n_channels=30, scalings="auto", block=True)
 
     # save plot
     #plot[0].savefig(plots_path / "raw.png")
