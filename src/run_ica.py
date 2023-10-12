@@ -24,6 +24,7 @@ def main():
 
         # crop to remove initial HPI noise and noise at the end of each trial (verified by manually checking raws in run_raw.py)
         cropped = raw.copy().crop(tmin=10, tmax=365)
+        del raw
 
         # some initial filtering 
         cropped.filter(l_freq=0.1, h_freq=40, n_jobs=4)
