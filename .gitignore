@@ -162,5 +162,3 @@ cython_debug/
 # mac dsstore
 .DS_Store
 
-# add ICA folder
-plots/ICA
