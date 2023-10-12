@@ -15,19 +15,21 @@ def main():
     recording_names = ['001.self_block1',  '002.other_block1',
                        '003.self_block2',  '004.other_block2',
                        '005.self_block3',  '006.other_block3']
-    
-    # combine raws
-    #raw = combine_raws(meg_path, recording_names)
 
     # load raw
-    raw = mne.io.read_raw(meg_path / recording_names[1] / 'files' / 'other_block1.fif', preload=True)
+    raw = mne.io.read_raw(meg_path / recording_names[0] / 'files' / "self_block1.fif", preload=True)
 
-    # plot raw 
-    raw.filter(l_freq=None, h_freq=30, n_jobs=4) # alters raw in-place
-    mne.viz.plot_raw(raw, duration=10, n_channels=30, scalings="auto", block=True)
+    # pick types
+    raw.pick_types(meg=True, eeg=False, stim=True)
 
-    # save plot
-    #plot[0].savefig(plots_path / "raw.png")
+    # filter raws
+    raw.filter(h_freq=40, l_freq = 0.1, n_jobs=4) # alters raw in-place
+
+    # apply projs
+    raw.apply_proj()
+
+    # plot raw
+    mne.viz.plot_raw(raw, duration=20, n_channels=30, block=True)
 
 
 if __name__ == "__main__":
