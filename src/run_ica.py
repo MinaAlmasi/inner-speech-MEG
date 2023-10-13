@@ -37,9 +37,9 @@ def main():
         ica.fit(cropped)
 
         # save ICA 
-        ica_outpath = path.parents[1] / "data" / "ICA" / f"{name}-ica.fif"
+        ica_outpath = path.parents[1] / "data" / "ICA"
         ica_outpath.mkdir(parents=True, exist_ok=True)
-        ica.save(ica_outpath, overwrite=True)
+        ica.save(ica_outpath / f"{name}-ica.fif", overwrite=True)
 
         # plot & save components
         components = ica.plot_components(show=False)
