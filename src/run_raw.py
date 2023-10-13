@@ -6,7 +6,7 @@ def main():
     # define paths 
     path = pathlib.Path(__file__)
 
-    meg_path = path.parents[3] / "834761" / "0114" / "20230927_000000" / "MEG"
+    meg_path = path.parents[3] / "834761" / "0108" / "20230928_000000" / "MEG"
 
     plots_path = path.parents[1] / "plots" / "sanity_checks"
     plots_path.mkdir(parents=True, exist_ok=True) # make plots path if it does not exist
@@ -17,7 +17,8 @@ def main():
                        '005.self_block3',  '006.other_block3']
 
     # load raw
-    raw = mne.io.read_raw(meg_path / recording_names[0] / 'files' / "self_block1.fif", preload=True)
+    chosen_recording = recording_names[4]
+    raw = mne.io.read_raw(meg_path / chosen_recording / 'files' / f"{chosen_recording[4:]}.fif", preload=True)
 
     # pick types
     raw.pick_types(meg=True, eeg=False, stim=True)
