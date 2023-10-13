@@ -36,6 +36,11 @@ def main():
         # fit ICA
         ica.fit(cropped)
 
+        # save ICA 
+        ica_outpath = path.parents[1] / "data" / "ICA" / f"{name}-ica.fif"
+        ica_outpath.mkdir(parents=True, exist_ok=True)
+        ica.save(ica_outpath, overwrite=True)
+
         # plot & save components
         components = ica.plot_components(show=False)
 
@@ -47,10 +52,6 @@ def main():
         for i, component in enumerate(components):
             component.savefig(comp_path / f"component_{i}.png")
 
-        # apply ICA 
-        cropped_copy = cropped.copy()
-        ica.apply(cropped_copy)
-
         # get sources 
         source_path = path.parents[1] / "plots" / "ICA" / "sources" / name
         source_path.mkdir(parents=True, exist_ok=True) # make plots path if it does not exist
@@ -61,7 +62,7 @@ def main():
         with mne.viz.use_browser_backend('matplotlib'):
             for start_pick in range(0, ica.n_components_, batch_size):
                 end_pick = min(start_pick + batch_size, ica.n_components_)
-                sources = ica.plot_sources(cropped_copy, show=False, show_scrollbars=False, picks=(range(start_pick, end_pick)))
+                sources = ica.plot_sources(cropped, show=False, show_scrollbars=False, picks=(range(start_pick, end_pick)))
                 sources.savefig(source_path / f"sources_{start_pick}_{end_pick}.png")
 
 if __name__ == "__main__":
