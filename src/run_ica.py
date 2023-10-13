@@ -4,7 +4,7 @@ import mne
 def main():
     # define paths 
     path = pathlib.Path(__file__)
-    meg_path = path.parents[3] / "834761" / "0114" / "20230927_000000" / "MEG"
+    meg_path = path.parents[3] / "834761" / "0108" / "20230928_000000" / "MEG"
 
     # define recording names 
     recording_names = ['001.self_block1',  '002.other_block1',
@@ -27,14 +27,17 @@ def main():
         del raw
 
         # some initial filtering 
-        cropped.filter(l_freq=0.1, h_freq=40, n_jobs=4)
-        cropped.apply_proj()
+        filtered = cropped.copy().filter(l_freq=1, h_freq=40)
+        filtered.apply_proj()
+
+        resampled = filtered.copy().resample(250)
+        del filtered
 
         # do ICA 
         ica = mne.preprocessing.ICA(n_components=0.9999, random_state=42, max_iter=3000)
 
         # fit ICA
-        ica.fit(cropped)
+        ica.fit(resampled)
 
         # save ICA 
         ica_outpath = path.parents[1] / "data" / "ICA"
