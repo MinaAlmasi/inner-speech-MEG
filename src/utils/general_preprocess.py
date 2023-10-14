@@ -3,12 +3,12 @@ import mne
 
 def ica_dict():
     ica_dict = {
-        "001.self_block1":[0, 1], 
-        "002.other_block1":[0, 2], 
-        "003.self_block2":[0, 3], 
-        "004.other_block2":[0, 4], 
-        "005.self_block3":[0, 5], 
-        "006.other_block3":[0, 6]
+        "001.self_block1":[1, 5, 8], 
+        "002.other_block1":[1, 7, 8], 
+        "003.self_block2":[1, 5, 12], 
+        "004.other_block2":[1, 8, 11], 
+        "005.self_block3":[1, 7, 12], 
+        "006.other_block3":[1, 9, 15]
         }
 
     return ica_dict
