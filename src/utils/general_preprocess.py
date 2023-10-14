@@ -1,69 +1,91 @@
 import pathlib
 import mne
 
-def combine_raws(meg_path:pathlib.Path, recording_names:list): 
+def ica_dict():
+    ica_dict = {
+        "001.self_block1":[0, 1], 
+        "002.other_block1":[0, 2], 
+        "003.self_block2":[0, 3], 
+        "004.other_block2":[0, 4], 
+        "005.self_block3":[0, 5], 
+        "006.other_block3":[0, 6]
+        }
+
+    return ica_dict
+
+def preprocess(meg_path, recording_name, ica_path, ica_exclude:list):
     '''
-    Combines raw data from multiple recordings.
+    Preprocesses raw data for a single recording
+
+    Args:
+        meg_path (pathlib.Path): path to meg data
+        recording_name (str): recording name
+        ica_path (pathlib.Path): path to ICA data
+        ica_exclude (list): list of ICA components to exclude
+
+    Returns:
+        processed_raw (mne.io.Raw): preprocessed raw data (where ica has been applied)
+    '''
+
+    # load raw
+    fif_fname = recording_name[4:]
+    full_path = meg_path / recording_name / 'files' / (fif_fname + '.fif')
+    
+    # read, load raw, pick types
+    raw = mne.io.read_raw(full_path, preload=True)
+    raw.load_data()
+    raw.pick_types(meg=True, eog=False, stim=True)
+
+    # remove bad channel
+    raw.info['bads'] += ['MEG0422']
+    raw.drop_channels(raw.info['bads'])
+
+    # crop to remove initial HPI noise and noise at the end of each trial (verified by manually checking raws in run_raw.py)
+    cropped = raw.copy().crop(tmin=10, tmax=365)
+    del raw
+
+    # initial filtering (back to 0.1 hz instead of 1 hz)
+    filtered = cropped.copy().filter(l_freq=0.1, h_freq=40)
+    filtered.apply_proj()
+
+    # RESAMPLE 
+    resampled = filtered.copy().resample(250)
+    del filtered
+    
+    # load ICA 
+    ica_full_path = ica_path / f"{recording_name}-ica.fif"
+    ica = mne.preprocessing.read_ica(ica_full_path)
+
+    # exclude icas 
+    ica.exclude = ica_exclude
+
+    # apply ICA
+    processed_raw = resampled.copy()
+    del resampled
+    ica.apply(processed_raw)
+
+    return processed_raw
+
+def preprocess_all(meg_path, recording_names, ica_path, ica_dict):
+    '''
+    Preprocesses all recordings in recording_names
 
     Args
-        meg_path (pathlib.Path): path to meg data (meg_path = .. / "834761" / "0114" / "20230927_000000" / "MEG" / recording_name)
-        recording_names (list): names of the recording files (e.g., "001.self_block1", "002.other_block1", etc.)
-
-    Returns 
-        raw (mne.io.Raw): raw data from all recordings
-    '''
-    
-    raw_files = []
-    
-    # iterate over recording names
-    for recording_index, recording_name in enumerate(recording_names):
-        # define file names, paths 
-        fif_fname = recording_name[4:]
-        full_path = meg_path / recording_name / 'files' / (fif_fname + '.fif')
-
-        # read raw and MAXWELL FILTER 
-        raw = mne.io.read_raw(full_path, preload=True)
-
-        # set dev_head_t_ref
-        if recording_index == 0:
-            dev_head_t_ref = raw.info['dev_head_t']
-        
-        raw = mne.preprocessing.maxwell_filter(raw, origin='auto', coord_frame='head', destination=dev_head_t_ref)           
-
-        raw_files.append(raw)
-
-    # combine raws
-    combined_raw = mne.concatenate_raws(raw_files, preload=True)
-
-    return combined_raw
-
-def filter_raw(raw, l_freq=None, h_freq=40):
-    '''
-    Apply low or high pass filtering to raw data.
-    Args:
-        raw (mne.io.Raw): raw data
-        l_freq (float): low frequency
-        h_freq (float): high frequency
+        meg_path (pathlib.Path): path to meg data
+        recording_names (list): list of recording names
+        ica_path (pathlib.Path): path to ICA data
+        ica_dict (dict): dictionary of ICA exclude lists
 
     Returns:
-        raw (mne.io.Raw): filtered raw data
+        processed_raws (dict): dictionary of preprocessed raws (where ica has been applied)
     '''
-    raw.filter(l_freq=l_freq, h_freq=h_freq, n_jobs=4)
 
-    return raw 
+    processed_raws = {}
+    for _, name in enumerate(recording_names):
+        ica_exclude = ica_dict[name]
+        processed_raws[name] = preprocess(meg_path, name, ica_path, ica_exclude)
 
-def get_events(raw, min_duration=0.002): 
-    '''
-    Gets events from raw data.
-    Args:
-        raw (mne.io.Raw): raw data
-
-    Returns:
-        events (numpy array): events
-    '''
-    events = mne.find_events(raw, min_duration=min_duration) ## returns a numpy array
-
-    return events
+    return processed_raws
 
 def epoching(raw, events, tmin, tmax, event_id=dict, reject_criterion:dict=None):
     '''
