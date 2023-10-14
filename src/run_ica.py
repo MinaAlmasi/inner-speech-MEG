@@ -37,7 +37,7 @@ def main():
         ica = mne.preprocessing.ICA(n_components=0.9999, random_state=42, max_iter=3000)
 
         # fit ICA
-        ica.fit(resampled)
+        ica.fit(filtered)
 
         # save ICA 
         ica_outpath = path.parents[1] / "data" / "ICA"
@@ -65,7 +65,7 @@ def main():
         with mne.viz.use_browser_backend('matplotlib'):
             for start_pick in range(0, ica.n_components_, batch_size):
                 end_pick = min(start_pick + batch_size, ica.n_components_)
-                sources = ica.plot_sources(cropped, show=False, show_scrollbars=False, picks=(range(start_pick, end_pick)))
+                sources = ica.plot_sources(resampled, show=False, show_scrollbars=False, picks=(range(start_pick, end_pick)))
                 sources.savefig(source_path / f"sources_{start_pick}_{end_pick}.png")
 
 if __name__ == "__main__":
