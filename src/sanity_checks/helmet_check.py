@@ -95,7 +95,7 @@ def main():
 
     alignment_plot = mne.viz.plot_alignment(info, trans=trans, subject='0108',
                         subjects_dir=subjects_dir, src=src,
-                        bem=bem, dig=True, mri_fiducials=True, show=False)
+                        bem=bem, dig=True, mri_fiducials=True)
 
     save_3D_figure(alignment_plot, plot_path / f"alignment_{chosen_recording}.png")
 
