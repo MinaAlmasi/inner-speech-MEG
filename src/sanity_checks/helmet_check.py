@@ -52,7 +52,7 @@ def main():
     subjects_dir = path.parents[4] / "835482" 
 
     # plot path
-    plot_path = path.parents[1] / "plots" / "sanity_checks"
+    plot_path = path.parents[2] / "plots" / "sanity_checks"
 
     # recordings
     recording_names = {0: '001.self_block1',  1: '002.other_block1',
@@ -95,7 +95,7 @@ def main():
 
     alignment_plot = mne.viz.plot_alignment(info, trans=trans, subject='0108',
                         subjects_dir=subjects_dir, src=src,
-                        bem=bem, dig=True, mri_fiducials=True)
+                        bem=bem, dig=True, mri_fiducials=True, show=False)
 
     save_3D_figure(alignment_plot, plot_path / f"alignment_{chosen_recording}.png")
 
