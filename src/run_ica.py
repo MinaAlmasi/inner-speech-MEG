@@ -37,7 +37,7 @@ def main():
         ica = mne.preprocessing.ICA(n_components=0.9999, random_state=42, max_iter=3000)
 
         # fit ICA
-        ica.fit(filtered)
+        ica.fit(resampled)
 
         # save ICA 
         ica_outpath = path.parents[1] / "data" / "ICA"
