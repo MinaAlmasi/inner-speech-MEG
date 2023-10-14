@@ -9,7 +9,7 @@ sys.path.append(str(pathlib.Path(__file__).parents[2]))
 import mne
 
 # custom module
-from src.utils.general_preprocess import preprocess, epoching, ica_dict
+from src.utils.general_preprocess import preprocess, epoching, ica_dict, create_evoked
 
 def main(): 
     # define paths 
