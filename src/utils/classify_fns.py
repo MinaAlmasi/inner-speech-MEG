@@ -1,15 +1,74 @@
 '''
-Functions for classification used in classify.py
+Functions for running classifications on source space data
 '''
+# utils 
+import pathlib
+from tqdm import tqdm 
+import numpy as np
+
+# MEG package for preprocessing
+import mne
+
+# classification models + scaling + evaluation (cross validation)
 from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 
-from tqdm import tqdm 
-import numpy as np
+# plotting
 import matplotlib.pyplot as plt
 
-## FUNCTIONS USED IN SIMPLE_CLASSIFICATION FUNCTION
+## PREPROCESSING 
+def get_source_space_data(epochs_dict:dict, subjects_dir, subject:str="0108", label=None):
+    '''
+    Extract source space data for classification 
+    (loosely based on https://mne.tools/stable/auto_examples/decoding/decoding_spatio_temporal_source.html#ex-dec-st-source)
+
+    Args
+        epochs_dict (dict): dictionary with epochs for each recording (keys are recording names, values are epochs objects)
+        subjects_dir (str): path to subjects_dir
+        subject (str): subject name (defaults to "0108")
+        label (str): label name
+    '''
+    # set empty array for y
+    y = np.zeros(0)
+
+    # extract y for all epochs and concatenate
+    for epochs in epochs_dict.values():
+        y = np.concatenate((y, epochs.events[:, 2]))
+
+    # load labels if relevant (if None, it will do a whole brain analysis)
+    if label is not None:
+        label_path = subjects_dir / subject / 'label' / label
+        label = mne.read_label(label_path)
+    
+    for epochs_index, (recording_name, epochs) in enumerate(epochs_dict.items()):
+        fwd_name = f"{recording_name[4:]}-oct-6-src-5120-fwd.fif"
+
+        # read forward solution
+        fwd = mne.read_forward_solution(subjects_dir / subject / 'bem' / fwd_name)
+
+        # source estimation! 
+        noise_cov = mne.compute_covariance(epochs, tmax=0.000)
+        
+        inv = mne.minimum_norm.make_inverse_operator(epochs.info,
+                                                     fwd, noise_cov)
+  
+        stcs = mne.minimum_norm.apply_inverse_epochs(epochs, inv, lambda2=1,
+                                                     method="MNE", label=label,
+                                                     pick_ori="normal")
+        # extract source space
+        this_X = np.array([stc.data for stc in stcs])
+
+        # concatenate (if first iteration, create X)
+        if epochs_index == 0:
+            X = this_X
+        else:
+            X = np.concatenate((X, this_X))
+    
+    return X, y 
+
+## CLASSIFICATION FUNCTIONS USED IN SIMPLE CLASSIFICATION FUNCTION
 def get_indices(y, triggers):
     '''
     Extract indices for triggers
@@ -63,7 +122,7 @@ def combine_triggers(y, combine):
     return y_combined
 
 ## SIMPLE CLASSIFICATION FUNCTION
-def simple_classification(X, y, triggers, penalty='none', C=1.0, combine=None):
+def simple_classification(X, y, triggers, penalty='none', C=1.0, n_splits=5, combine=None):
     '''
     Perform a Logistic regression 
     '''
@@ -83,8 +142,9 @@ def simple_classification(X, y, triggers, penalty='none', C=1.0, combine=None):
     if combine:
         y = combine_triggers(y, combine)
 
-    logr = LogisticRegression(penalty=penalty, C=C, solver='newton-cg')
-    
+    #clf = LogisticRegression(penalty=penalty, C=C, solver='newton-cg')
+    clf = GaussianNB()
+
     # scale data 
     sc = StandardScaler() # especially necessary for sensor space as
                           ## magnetometers
@@ -92,7 +152,7 @@ def simple_classification(X, y, triggers, penalty='none', C=1.0, combine=None):
                           ## (T and T/m)
 
     # init cross validation
-    cv = StratifiedKFold()
+    cv = StratifiedKFold(n_splits = n_splits, random_state=42, shuffle=True)
     
     # get mean scores
     mean_scores = np.zeros(n_samples)
@@ -101,7 +161,7 @@ def simple_classification(X, y, triggers, penalty='none', C=1.0, combine=None):
         this_X = X[:, :, sample_index]
         sc.fit(this_X)
         this_X_std = sc.transform(this_X)
-        scores = cross_val_score(logr, this_X_std, y, cv=cv)
+        scores = cross_val_score(clf, this_X_std, y, cv=cv)
         mean_scores[sample_index] = np.mean(scores)
         
     return mean_scores
