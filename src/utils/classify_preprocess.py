@@ -1,75 +1,75 @@
 '''
-Functions for preparing data for classification
+Function for preparing data for classification
 '''
 
 # general utils
-from os.path import join
+import pathlib
 import numpy as np
 
 # mne tools
 import mne
-from utils.general_preprocess import epoching
+
+def get_source_space_data(epochs_dict:dict, subjects_dir, subject:str="0108", label=None):
+    '''
+    Extract and preprocess 
+
+    Args
+        epochs_dict (dict): dictionary with epochs for each recording (keys are recording names, values are epochs objects)
+        subjects_dir (str): path to subjects_dir
+        subject (str): subject name (defaults to "0108")
+        label (str): label name
+    '''
 
 
-def preprocess_sensor_space_data(subject, date, raw_path,
-                                 h_freq=40,
-                                 tmin=-0.200, tmax=1.000, baseline=(None, 0),
-                                 reject=None, decim=4, reject_criterion=None):
+    # set empty array for y
+    y = np.zeros(0)
 
-    # define recording names 
-    recording_names = ['001.self_block1',  '002.other_block1',
-                       '003.self_block2',  '004.other_block2',
-                       '005.self_block3',  '006.other_block3']
+    # extract y for all epochs and concatenate
+    for epochs in epochs_dict.values():
+        y = np.concatenate((y, epochs.events[:, 2]))
+
+    # load labels if relevant (if None, it will do a whole brain analysis)
+    if label is not None:
+        label_path = subjects_dir / subject / 'label' / label
+        label = mne.read_label(label_path)
     
-    
-    epochs_list = list()
-    
-    # iterate over recording names
-    for recording_index, recording_name in enumerate(recording_names):
-        # define file names, paths 
-        fif_fname = recording_name[4:]
-        full_path = join(raw_path, subject, date, 'MEG', recording_name,
-                         'files', fif_fname + '.fif')
+    for epochs_index, (recording_name, epochs) in enumerate(epochs_dict.items()):
+        fwd_name = f"{recording_name[4:]}-oct-6-src-5120-fwd.fif"
+
+        # read forward solution
+        fwd = mne.read_forward_solution(subjects_dir / subject / 'bem' / fwd_name)
+
+        # source estimation! 
+        noise_cov = mne.compute_covariance(epochs, tmax=0.000)
         
-        # read raw and filter 
-        raw = mne.io.read_raw(full_path, preload=True)
-        raw.filter(l_freq=None, h_freq=h_freq, n_jobs=3)
-        
-        # find events 
-        events = mne.find_events(raw, min_duration=0.002)
-        
-        if 'self' in recording_name:
-            event_id = dict(self_positive=11, self_negative=12,
-                            button_press=23)
-        elif 'other' in recording_name: 
-            event_id = dict(other_positive=21, other_negative=22,
-                            button_press=23)
+        inv = mne.minimum_norm.make_inverse_operator(epochs.info,
+                                                     fwd, noise_cov)
+  
+        stcs = mne.minimum_norm.apply_inverse_epochs(epochs, inv, lambda2=1,
+                                                     method="MNE", label=label,
+                                                     pick_ori="normal")
+                            
+        for stc_index, stc in enumerate(stcs):
+            this_data = stc.data
+            if stc_index == 0:
+                n_trials = len(stcs)
+                n_vertices, n_samples = this_data.shape
+                this_X = np.zeros(shape=(n_trials, n_vertices, n_samples))
+            
+            this_X[stc_index, :, :] = this_data
+            
+        if epochs_index == 0:
+            X = this_X
         else:
-            raise NameError('Event codes are not coded for file')
-        
-        # added a epoching function which includes a reject criterion that was not present in OG script
-        epochs = epoching(raw, events, tmin=tmin, tmax=tmax,
-                          event_id=event_id, reject_criterion=reject_criterion)
-        
-        epochs_list.append(epochs)
-        
-        if recording_index == 0:
-            X = epochs.get_data()
-            y = epochs.events[:, 2]
-        else:
-            X = np.concatenate((X, epochs.get_data()), axis=0)
-            y = np.concatenate((y, epochs.events[:, 2]))
-    
-    return epochs_list
+            X = np.concatenate((X, this_X))
 
+    return X, y    
+
+"""
 def preprocess_source_space_data(subject, date, raw_path, subjects_dir,
-                                 epochs_list,
+                                 epochs_list, recording_names,
                               method='MNE', lambda2=1, pick_ori='normal',
                               label=None):
-
-    if epochs_list is None:
-        epochs_list = preprocess_sensor_space_data(subject, date, raw_path,
-                                                   return_epochs=True)
 
     # extract y 
     y = np.zeros(0)
@@ -80,15 +80,11 @@ def preprocess_source_space_data(subject, date, raw_path, subjects_dir,
         label_path = join(subjects_dir, subject, 'label', label)
         label = mne.read_label(label_path)
     
-    # extract X 
-    recording_names = ['001.self_block1',  '002.other_block1',
-                       '003.self_block2',  '004.other_block2',
-                       '005.self_block3',  '006.other_block3']
-    
     for epochs_index, epochs in enumerate(epochs_list): 
         # paths 
-        fwd_fname = recording_names[epochs_index][4:] + '-oct-6-src-' + \
-                    '5120-fwd.fif'
+        recording = epochs
+        f'{chosen_recording[4:]}-oct-6-src-5120-fwd.fif'
+
         fwd = mne.read_forward_solution(join(subjects_dir,
                                              subject, 'bem', fwd_fname))
 
@@ -115,3 +111,4 @@ def preprocess_source_space_data(subject, date, raw_path, subjects_dir,
             X = np.concatenate((X, this_X))
 
     return X, y
+    """
