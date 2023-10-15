@@ -6,7 +6,7 @@ Run in terminal:
 '''
 
 # utils
-import pathlib, argparse, sys
+import pathlib, sys
 sys.path.append(str(pathlib.Path(__file__).parents[2]))
 
 # MEG package
@@ -32,8 +32,7 @@ def main():
     plot_path = path.parents[2] / "plots" / "sanity_checks" / "motor_visual"
     plot_path.mkdir(parents=True, exist_ok=True)
 
-    # load and preprocess all recordings
-    
+    ## LOAD + PREPROCESS DATA ##
     recording_names = ['001.self_block1',  '002.other_block1',
                        '003.self_block2',  '004.other_block2',
                        '005.self_block3',  '006.other_block3']
