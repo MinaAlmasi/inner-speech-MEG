@@ -2,14 +2,14 @@
 Sanity check for visual activation.
 
 Run in terminal: 
-    python src.sanity_checks.visual_activation_check -r {RECORDING_NUMBER}
+    python src/sanity_checks/visual_activation_check -r {RECORDING_NUMBER}
 
 Where recording number corresponds to: 
     recording_names = {0: '001.self_block1',  1: '002.other_block1',
                        2: '003.self_block2',  3: '004.other_block2',
                        4: '005.self_block3',  5: '006.other_block3'}
 
-E.g., python src.sanity_checks.visual_activation_check -r 0 will run the script on the first recording (001.self_block1)
+E.g., python src/sanity_checks/visual_activation_check -r 0 will run the script on the first recording (001.self_block1)
 '''
 # utils 
 import pathlib 
