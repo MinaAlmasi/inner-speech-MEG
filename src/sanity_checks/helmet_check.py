@@ -31,6 +31,7 @@ def save_3D_figure(plot, savepath):
 
     fig.savefig(savepath, dpi=1200)
 
+
 def main(): 
     # args
     args = input_parse()
@@ -47,7 +48,8 @@ def main():
     subjects_dir = path.parents[4] / "835482" 
 
     # plot path
-    plot_path = path.parents[2] / "plots" / "sanity_checks"
+    plot_path = path.parents[2] / "plots" / "sanity_checks" / "helmet_check"
+    plot_path.mkdir(parents=True, exist_ok=True)
 
     # recordings
     recording_names = {0: '001.self_block1',  1: '002.other_block1',
@@ -88,9 +90,13 @@ def main():
     # plot source space
     bem = bem_path / "0108-5120-bem.fif"
 
+    # plot 
     alignment_plot = mne.viz.plot_alignment(info, trans=trans, subject='0108',
                         subjects_dir=subjects_dir, src=src,
                         bem=bem, dig=True, mri_fiducials=True)
+    
+    # set view (angle from the side)
+    mne.viz.set_3d_view(alignment_plot, 45, 90, distance=0.6, focalpoint=(0., 0., 0.))
 
     save_3D_figure(alignment_plot, plot_path / f"alignment_{chosen_recording}.png")
 
