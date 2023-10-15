@@ -10,6 +10,7 @@ import mne
 
 # custom modules for preprocessing
 from src.utils.general_preprocess import preprocess, ica_dict, epoching
+from src.utils.arguments import input_parse
 
 # plotting 
 import matplotlib.pyplot as plt
@@ -29,12 +30,6 @@ def save_3D_figure(plot, savepath):
     fig.tight_layout()
 
     fig.savefig(savepath, dpi=1200)
-
-def input_parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--recording', type=int, default=0, help="Number of the recording to be used")
-    args = parser.parse_args()
-    return args
 
 def main(): 
     # args
