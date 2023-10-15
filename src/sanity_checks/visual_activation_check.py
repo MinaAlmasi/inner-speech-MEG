@@ -2,7 +2,14 @@
 Sanity check for visual activation.
 
 Run in terminal: 
-    python src.sanity_checks.visual_activation_check -r 0
+    python src.sanity_checks.visual_activation_check -r {RECORDING_NUMBER}
+
+Where recording number corresponds to: 
+    recording_names = {0: '001.self_block1',  1: '002.other_block1',
+                       2: '003.self_block2',  3: '004.other_block2',
+                       4: '005.self_block3',  5: '006.other_block3'}
+
+E.g., python src.sanity_checks.visual_activation_check -r 0 will run the script on the first recording (001.self_block1)
 '''
 # utils 
 import pathlib 
@@ -25,7 +32,7 @@ def main():
     meg_path = path.parents[4] / "834761" / "0108" / "20230928_000000" / "MEG"
     ica_path = path.parents[2] / "data" / "ICA"
 
-    plots_path = path.parents[2] / "plots" / "sanity_checks"
+    plots_path = path.parents[2] / "plots" / "sanity_checks" / "visual_activation"
     plots_path.mkdir(parents=True, exist_ok=True) # make plots path if it does not exist
 
     # define recording names 
@@ -62,11 +69,10 @@ def main():
     epochs = epoching(processed_raw, events, event_id=event_id, tmin=-0.200, tmax=1.000, reject_criterion=reject)
     print(epochs)
 
-    plots = epochs.plot_image(picks="meg", combine="mean")
+    plots = epochs.plot_image(picks="meg", combine="mean", show=False)
 
-    # save plot
-    for i, _ in enumerate(plots): 
-        plots[i].savefig(plots_path / f"{chosen_recording[4:]}_epochs_{i}.png")
+    # save plot with gradiometers only (hence [0])
+    plots[0].savefig(plots_path / f"{chosen_recording[4:]}_epochs_grad.png")
 
     # compute evokeds
     evoked = create_evoked(epochs, triggers=[f'{cond}_positive', f'{cond}_negative', 'button_img'])
@@ -77,14 +83,10 @@ def main():
 
     # combine evoked 
     visual_evoked = mne.combine_evoked([pos_evoked, neg_evoked, button_evoked], weights="equal")
-    
-    # plot evokeds
-    pos_evoked_plot = visual_evoked.plot_joint(picks="meg")
-    pos_evoked_plot[1].savefig(plots_path / f"all_evoked_plot_{chosen_recording[4:]}.png", dpi=1200)
 
     # plot topographies
-    pos_evoked_topo_plot = visual_evoked.plot_topomap(times=[-0.2, 0.12, 0.5, 0.82, 1], ch_type="grad")
-    pos_evoked_topo_plot.savefig(plots_path / f"pos_evoked_topo_plot_{chosen_recording[4:]}.png")
+    pos_evoked_topo_plot = visual_evoked.plot_topomap(times=[-0.1, 0.12, 0.5, 0.82, 1], ch_type="grad")
+    pos_evoked_topo_plot.savefig(plots_path / f"{chosen_recording[4:]}_pos_evoked_topo_plot.png")
 
 
 if __name__ == "__main__":
