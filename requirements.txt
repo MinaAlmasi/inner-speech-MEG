@@ -15,7 +15,6 @@ pyvistaqt
 ndslib
 ipykernel
 pyvista
-nbconvert
 mne_qt_browser 
 pyqt5-tools
 h5io
