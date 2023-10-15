@@ -19,7 +19,7 @@ from sklearn.model_selection import cross_val_score, StratifiedKFold
 import matplotlib.pyplot as plt
 
 ## PREPROCESSING 
-def get_source_space_data(epochs_dict:dict, subjects_dir, subject:str="0108", label=None):
+def get_source_space_data(epochs_dict:dict, subjects_dir, subject:str="0108", label=None, method="dSPM"):
     '''
     Extract source space data for classification 
     (loosely based on https://mne.tools/stable/auto_examples/decoding/decoding_spatio_temporal_source.html#ex-dec-st-source)
@@ -55,7 +55,7 @@ def get_source_space_data(epochs_dict:dict, subjects_dir, subject:str="0108", la
                                                      fwd, noise_cov)
   
         stcs = mne.minimum_norm.apply_inverse_epochs(epochs, inv, lambda2=1,
-                                                     method="MNE", label=label,
+                                                     method=method, label=label,
                                                      pick_ori="normal")
         # extract source space
         this_X = np.array([stc.data for stc in stcs])
