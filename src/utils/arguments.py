@@ -1,5 +1,5 @@
 '''
-Arguments
+Arguments used in various scripts
 '''
 import argparse
 
