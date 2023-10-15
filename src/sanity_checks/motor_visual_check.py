@@ -12,10 +12,12 @@ sys.path.append(str(pathlib.Path(__file__).parents[2]))
 # MEG package
 import mne
 
-# custom modules for preprocessing
+# numpy
+import numpy as np
+
+# custom modules for preprocessing and classification
 from src.utils.general_preprocess import preprocess_all, ica_dict, epoching
-from src.utils.classify_preprocess import get_source_space_data
-from src.utils.classify_fns import simple_classification, plot_classification
+from src.utils.classify_fns import simple_classification, plot_classification, get_source_space_data
 
 def main(): 
     ## PATHS and FILES ## 
@@ -31,13 +33,10 @@ def main():
     plot_path.mkdir(parents=True, exist_ok=True)
 
     # load and preprocess all recordings
-    '''
+    
     recording_names = ['001.self_block1',  '002.other_block1',
                        '003.self_block2',  '004.other_block2',
                        '005.self_block3',  '006.other_block3']
-    '''
-    recording_names = ['001.self_block1',  '002.other_block1',
-                       '003.self_block2']
 
     # get ica components to exclude
     ica_components = ica_dict()
@@ -60,30 +59,36 @@ def main():
         events  = mne.find_events(raw, min_duration = 2/raw.info["sfreq"])
 
         # epoch data
-        epochs = epoching(raw, events, tmin=-0.200, tmax=1.000, event_id=event_id, reject_criterion=reject_criterion)
+        epochs = epoching(raw, events, tmin=-0.200, tmax=1.500, event_id=event_id, reject_criterion=reject_criterion)
 
         # append to dict
         epochs_dict[recording_name] = epochs
 
     # get source space data
-    X, y = get_source_space_data(epochs_dict, subjects_dir, subject="0108", label="lh.postcentral.label")
+    label = "lh.postcentral.label"
+    X, y = get_source_space_data(epochs_dict, subjects_dir, subject="0108", label=label)
 
-    # simple classification
-    triggers = [11, 23]
+    # get first value from epochs_dict
+    first_epochs = list(epochs_dict.values())[0]
+    times = first_epochs.times
 
+    # select triggers for positive and button img
+    triggers = [11, 21, 23]
+
+    # complete simple classification
     classification = simple_classification(
                                 X=X, 
                                 y=y, 
                                 triggers=triggers,
                                 penalty='l2', 
                                 C=1e-3, 
-                                combine=None
-                                )
+                                combine=[[11, 21]]) # combines the two positive triggers
+    
     plot_classification(
-        times = [-0.200, 1.000], 
+        times = times, 
         mean_scores = classification, 
-        title = f"Triggers: {triggers}",
-        savepath = plot_path / f"test.png"
+        title = f"{label}. Triggers: {triggers}",
+        savepath = plot_path / f"{label}_{triggers}.png"
     )
 
 if __name__ == "__main__":

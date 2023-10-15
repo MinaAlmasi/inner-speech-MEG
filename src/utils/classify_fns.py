@@ -113,7 +113,6 @@ def combine_triggers(y, combine):
     y_combined = y.copy()
 
     for pair in combine:
-        print(pair)
         combine_pair = int(str(pair[0]) + str(pair[1]))
         for i, trigger in enumerate(y_combined):
             if trigger in pair:
@@ -179,6 +178,6 @@ def plot_classification(times, mean_scores, title=None, savepath=None):
 
     # if the savepath is NOT none, save the plot
     if savepath: 
-        fig.savefig(savepath)
+        fig.savefig(savepath, dpi=1200)
 
     return fig, ax
