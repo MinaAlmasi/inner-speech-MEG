@@ -2,16 +2,21 @@
 Script to classify brain areas. 
 
 Run in the terminal: 
-    python src/classify.py -area {BRAIN_LABEL_TO_CLASSIFY}
+    python src/classify.py -label {BRAIN_LABEL_TO_CLASSIFY}
 '''
 
-import pathlib
-import argparse
+# utils
+import pathlib, argparse
 
-# custom modules with functions!  
-from utils.classify_preprocess import preprocess_sensor_space_data, preprocess_source_space_data
-from utils.classify_fns import simple_classification, plot_classification
+# MEG package
+import mne
 
+# numpy
+import numpy as np
+
+# custom modules for preprocessing and classification
+from utils.general_preprocess import preprocess_all, ica_dict, epoching
+from utils.classify_fns import simple_classification, plot_classification, get_source_space_data
 
 def input_parse(): 
     parser=argparse.ArgumentParser()
@@ -23,59 +28,78 @@ def input_parse():
     return args
 
 def main(): 
+    # args
     args = input_parse()
-    label_to_classify = args.brain_label
 
-    # define paths
+    ## PATHS and FILES ## 
     path = pathlib.Path(__file__)
-    raw_path = path.parents[3] / "834761" # path.parents[i] denotes how many steps you go out from where the .py file is located (i.e., number of ".." / ".." in a file path)
+
+    # raw meg data paths 
+    meg_path = path.parents[3] / "834761" / "0108" / "20230928_000000" / "MEG"
+    ica_path = path.parents[1] / "data" / "ICA"
     subjects_dir = path.parents[3] / "835482" 
-    
-    plots_path = path.parents[1] / "plots"
-    plots_path.mkdir(parents=True, exist_ok=True) # make plots path if it does not exist
 
-    # preprocess SENSOR space
-    epochs_list = preprocess_sensor_space_data(
-        '0114', '20230927_000000',
-        raw_path=raw_path,
-        decim=10,
-        reject_criterion=dict(mag=4e-12, grad=4000e-13, eog=250e-6)
-        ) # don't go above decim=10
+    # plot path
+    plot_path = path.parents[1] / "plots" / "classifications"
+    plot_path.mkdir(parents=True, exist_ok=True)
 
-    # preprocess SOURCE space 
-    brain_area, y = preprocess_source_space_data(
-        subject = '0114', 
-        date = '20230927_000000',
-        
-        raw_path=raw_path,
-        subjects_dir=subjects_dir,
+    # load and preprocess all recordings
+    recording_names = ['001.self_block1',  '002.other_block1',
+                       '003.self_block2',  '004.other_block2',
+                       '005.self_block3',  '006.other_block3']
 
-        label=label_to_classify,
-        epochs_list=epochs_list
-        )
+    # get ica components to exclude
+    ica_components = ica_dict()
 
-    # perform classification
-    triggers = [11, 12]
+    # preprocess all recordings
+    processed_raws = preprocess_all(meg_path, recording_names, ica_path, ica_components)
 
+    # prepare for epochs, define rejection criterion
+    epochs_dict = {}
+    reject_criterion = dict(mag=4e-12, grad=4000e-13)
+
+    # iterate over values in processed_raws
+    for recording_name, raw in processed_raws.items(): 
+        if "self" in recording_name: 
+            event_id = dict(self_positive=11, self_negative=12, button_img=23)
+        else: 
+            event_id = dict(other_positive=21, other_negative=22, button_img=23)
+
+        # get events
+        events  = mne.find_events(raw, min_duration = 2/raw.info["sfreq"])
+
+        # epoch data
+        epochs = epoching(raw, events, tmin=-0.200, tmax=1.500, event_id=event_id, reject_criterion=reject_criterion)
+
+        # append to dict
+        epochs_dict[recording_name] = epochs
+
+    # get source space data
+    label = args.brain_label
+    X, y = get_source_space_data(epochs_dict, subjects_dir, subject="0108", label=label)
+
+    # get first value from epochs_dict
+    first_epochs = list(epochs_dict.values())[0]
+    times = first_epochs.times
+
+    # select triggers for positive and button img
+    triggers = [11, 21, 23]
+
+    # complete simple classification
     classification = simple_classification(
-                                X=brain_area, 
+                                X=X, 
                                 y=y, 
                                 triggers=triggers,
                                 penalty='l2', 
                                 C=1e-3, 
-                                combine=None
-                                )
-
-    # plot classification
-    times = epochs_list[0].times  # extract time for plotting
-
+                                combine=[[11, 21]]) # combines the two positive triggers
+    
     plot_classification(
         times = times, 
         mean_scores = classification, 
-        title = f"{label_to_classify}. Triggers: {triggers}",
-        savepath = plots_path / f"{label_to_classify}.png"
+        title = f"{label}. Triggers: {triggers}",
+        savepath = plot_path / f"{label}_{triggers}.png"
     )
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()
-
