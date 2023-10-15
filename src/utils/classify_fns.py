@@ -166,18 +166,25 @@ def simple_classification(X, y, triggers, penalty='none', C=1.0, n_splits=5, com
     return mean_scores
 
 def plot_classification(times, mean_scores, title=None, savepath=None):
-    fig, ax = plt.subplots()
-    ax.plot(times, mean_scores)
-    ax.hlines(0.50, times[0], times[-1], linestyle='dashed', color='k')
-    ax.set_ylabel('Proportion classified correctly')
-    ax.set_xlabel('Time (s)')
+    # Set figure size for better aspect ratio
+    fig, ax = plt.subplots(figsize=(8, 6))
     
-    # if the title is NOT none, add it! 
+    # Plot data in greyscale
+    ax.plot(times, mean_scores, 'k-', linewidth=1.5, label='Mean Scores')
+    
+    # Add a dashed line at y=0.5
+    ax.hlines(0.50, times[0], times[-1], linestyle='dashed', color='grey', linewidth=0.75)
+    
+    # Set labels, title and grid
+    ax.set_ylabel('Proportion classified correctly', fontsize=14)
+    ax.set_xlabel('Time (s)', fontsize=14)
+    ax.tick_params(axis='both', which='major', labelsize=12)
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+    
     if title:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=16, fontweight='bold')
 
-    # if the savepath is NOT none, save the plot
     if savepath: 
-        fig.savefig(savepath, dpi=1200)
+        fig.savefig(savepath, dpi=1200, bbox_inches='tight')
 
     return fig, ax
