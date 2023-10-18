@@ -163,6 +163,5 @@ cython_debug/
 .DS_Store
 
 # ignore data
-data/*
-!data/README.md
+data/ICA/*
 !data/ICA/.gitkeep
