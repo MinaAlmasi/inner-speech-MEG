@@ -64,7 +64,7 @@ def main():
         epochs_dict[recording_name] = epochs
 
     # get source space data
-    label = "lh.postcentral.label"
+    label = "lh.precentral.label"
     X, y = get_source_space_data(epochs_dict, subjects_dir, subject="0108", label=label)
 
     # get first value from epochs_dict
@@ -86,7 +86,7 @@ def main():
     plot_classification(
         times = times, 
         mean_scores = classification, 
-        title = f"{label}. Triggers: {triggers}",
+        title = f"Motor vs visual activation in precentral gyrus (lh)",
         savepath = plot_path / f"{label}_{triggers}.png"
     )
 
