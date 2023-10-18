@@ -3,6 +3,16 @@ Script to classify brain areas.
 
 Run in the terminal: 
     python src/classify.py -label {BRAIN_LABEL_TO_CLASSIFY}
+
+The script has been run on the following labels (from freesurfer):
+    rh.bankssts.label
+    lh.bankssts.label
+
+    rh.medialorbitofrontal.label
+    lh.medialorbitofrontal.label
+
+    rh.superiortemporal.label
+    lh.superiortemporal.label
 '''
 
 # utils
@@ -16,13 +26,13 @@ import numpy as np
 
 # custom modules for preprocessing and classification
 from utils.general_preprocess import preprocess_all, ica_dict, epoching
-from utils.classify_fns import simple_classification, plot_classification, get_source_space_data
+from utils.classify_fns import simple_classification, plot_classification, get_source_space_data, combine_triggers
 
 def input_parse(): 
     parser=argparse.ArgumentParser()
 
     # add arguments to parser
-    parser.add_argument("-label", "--brain_label", type=str, help="brain label to classify on (from freesurfer)", default="rh.supramarginal.label")
+    parser.add_argument("-label", "--brain_label", type=str, help="brain label to classify on (from freesurfer)", default="rh.bankssts.label")
     args = parser.parse_args()
 
     return args
@@ -83,7 +93,7 @@ def main():
     times = first_epochs.times
 
     # select triggers for positive and button img
-    triggers = [11, 21, 23]
+    triggers = [11, 21, 12, 22]
 
     # complete simple classification
     classification = simple_classification(
@@ -92,12 +102,12 @@ def main():
                                 triggers=triggers,
                                 penalty='l2', 
                                 C=1e-3, 
-                                combine=[[11, 21]]) # combines the two positive triggers
+                                combine=[[11, 21], [12, 22]]) # combines the two positive triggers
     
     plot_classification(
         times = times, 
         mean_scores = classification, 
-        title = f"{label}. Triggers: {triggers}",
+        title = f"{label}. Triggers: {triggers} (combined)",
         savepath = plot_path / f"{label}_{triggers}.png"
     )
 
