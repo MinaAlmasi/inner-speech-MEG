@@ -68,36 +68,31 @@ def split_stcs(stcs_list, y, trigger1, trigger2):
 
     return stcs_trigger1, stcs_trigger2
 
-def plot_stc_contrast(stcs_1, stcs_2, subjects_dir, subject="0108", savepath=None):
+def plot_stcs(stcs, subjects_dir, subject="0108", savepath=None):
     '''
-    Plot contrast between two conditions
+    Plot source time course object 
     '''
-    # get mean stc for each condition
-    mean_stcs_1 = np.mean(stcs_1)
-    mean_stcs_2 = np.mean(stcs_2)
-    
-    # get difference between conditions
-    stc_diff = mean_stcs_1 - mean_stcs_2
+    # get mean stc
+    mean_stcs = np.mean(stcs)
 
     # plot params
     #clim = dict(kind='value', pos_lims=[0, 0.37, 0.75])
-    #clim = dict(kind='value', lims=[-0.75, 0, 0.75])
-    plot = mean_stcs_1.plot(
+    clim = dict(kind='percent', lims=[10, 60, 90])
+    plot = mean_stcs.plot(
         initial_time=0.37,
         subjects_dir=subjects_dir,
         subject=subject,
         hemi='split',
         size = (800, 400),
         views = ["lateral"],
-        colormap='coolwarm'
+        colormap='coolwarm', 
+        #clim=clim,
     )
 
-    # save
     if savepath is not None:
         plot.save_image(savepath)
-
-    return plot 
-
+    
+    return plot
 
 def main(): 
     ## PATHS and FILES ## 
@@ -152,8 +147,9 @@ def main():
     # get stcs for the two groups (based on triggers)
     stcs_1, stcs_2 = split_stcs(stcs, y, trigger1=1121, trigger2=1222)
 
-    # plot contrast
-    plot_stc_contrast(stcs_1, stcs_2, subjects_dir, subject="0108", savepath=plot_path / "self_vs_other.png")
+    # plot contrast for both stcs and stcs2 using plot_stcs:
+    plot_stcs(stcs_1, subjects_dir, subject="0108", savepath=plot_path / "positive_self_and_other.png")
+    plot_stcs(stcs_2, subjects_dir, subject="0108", savepath=plot_path / "negative_self_and_other.png")
 
 if __name__ == "__main__": 
     main()
