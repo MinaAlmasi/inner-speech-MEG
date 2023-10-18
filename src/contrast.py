@@ -76,17 +76,15 @@ def plot_stcs(stcs, subjects_dir, subject="0108", savepath=None):
     mean_stcs = np.mean(stcs)
 
     # plot params
-    #clim = dict(kind='value', pos_lims=[0, 0.37, 0.75])
-    clim = dict(kind='percent', lims=[10, 60, 90])
+    clim = dict(kind='value', lims=[0.35, 0.85, 1.4])
     plot = mean_stcs.plot(
-        initial_time=0.37,
+        initial_time=0.30,
         subjects_dir=subjects_dir,
         subject=subject,
         hemi='split',
         size = (800, 400),
         views = ["lateral"],
-        colormap='coolwarm', 
-        #clim=clim,
+        clim=clim
     )
 
     if savepath is not None:
