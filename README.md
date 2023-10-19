@@ -3,7 +3,7 @@ Investigating inner speech using MEG. Portfolio 3 by study group 7 (Alina, Anton
 
 All code in the `src` folder was utilised for various stages of the project. 
 
-Below, an overview of the repository is described. For reproducing the results, please follow the *Pipeline* section. Please note that the data cannot be made publicaly available, and the scripts are therefore not able to run without gaining access to the data.
+Below, an overview of the repository is described. For reproducibility, please refer to the *Pipeline* section. Note that the data is highly sensitive and therefore cannot be made publicly available. Hence, the scripts are not able to run without firstly gaining access to the data. 
 
 ## Structure
 The repository is structured as such: 
