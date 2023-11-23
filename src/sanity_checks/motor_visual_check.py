@@ -85,7 +85,7 @@ def main():
     
     plot_classification(
         times = times, 
-        mean_scores = classification, 
+        mean_scores = mean_scores, 
         permutation_scores = permutation_scores,
         title = f"Motor vs visual activation in precentral gyrus (lh)",
         savepath = plot_path / f"{label}_{triggers}.png"
