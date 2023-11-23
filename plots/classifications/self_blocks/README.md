@@ -1,1 +1,1 @@
-Plots used in Appendix. Title states that the triggers are combined, but this is not true.
+Plots used in Appendix. 
