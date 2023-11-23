@@ -102,7 +102,7 @@ def main():
     subjects_dir = path.parents[3] / "835482" 
 
     # plot path
-    plot_path = path.parents[1] / "plots" / "contrasts"
+    plot_path = path.parents[1] / "plots" / "stc_plots"
     plot_path.mkdir(parents=True, exist_ok=True)
 
     ## LOAD + PREPROCESS DATA ##
