@@ -92,11 +92,12 @@ def main():
     first_epochs = list(epochs_dict.values())[0]
     times = first_epochs.times
 
-    # select triggers for positive and button img
+    # select triggers for positive
     triggers = [11, 21, 12, 22]
+    # triggers = [11, 12] # NB. remember to remove combine also in simple_classification!!!
 
     # complete simple classification
-    classification = simple_classification(
+    mean_scores, y_pred_all, y_true_all, permutation_scores = simple_classification(
                                 X=X, 
                                 y=y, 
                                 triggers=triggers,
@@ -106,7 +107,8 @@ def main():
     
     plot_classification(
         times = times, 
-        mean_scores = classification, 
+        mean_scores = mean_scores, 
+        permutation_scores = permutation_scores,
         title = f"{label}. Triggers: {triggers} (combined)",
         savepath = plot_path / f"{label}_{triggers}.png"
     )

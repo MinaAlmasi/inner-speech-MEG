@@ -13,7 +13,8 @@ import mne
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.model_selection import cross_val_score, StratifiedKFold, cross_val_predict, permutation_test_score
+from sklearn.inspection import permutation_importance
 
 # plotting
 import matplotlib.pyplot as plt
@@ -121,7 +122,7 @@ def combine_triggers(y, combine):
     return y_combined
 
 ## SIMPLE CLASSIFICATION FUNCTION
-def simple_classification(X, y, triggers, penalty='none', C=1.0, n_splits=5, combine=None):
+def simple_classification(X, y, triggers, penalty='none', C=1.0, n_splits=5, combine=None, n_permutations=100):
     '''
     Perform a Logistic regression 
     '''
@@ -153,27 +154,54 @@ def simple_classification(X, y, triggers, penalty='none', C=1.0, n_splits=5, com
     # init cross validation
     cv = StratifiedKFold(n_splits = n_splits, random_state=42, shuffle=True)
     
-    # get mean scores
+    # init vals 
     mean_scores = np.zeros(n_samples)
+    
+    permutation_scores = np.zeros((n_samples, n_permutations))
+    y_pred_all = []
+    y_true_all = [] 
     
     for sample_index in tqdm(range(n_samples)):
         this_X = X[:, :, sample_index]
         sc.fit(this_X)
         this_X_std = sc.transform(this_X)
-        scores = cross_val_score(clf, this_X_std, y, cv=cv)
-        mean_scores[sample_index] = np.mean(scores)
-        
-    return mean_scores
 
-def plot_classification(times, mean_scores, title=None, savepath=None):
+        # cross val
+        y_pred = cross_val_predict(clf, this_X_std, y, cv=cv)
+
+        scores = np.mean(y_pred == y)
+        mean_scores[sample_index] = scores
+
+        y_pred_all.append(y_pred)
+        y_true_all.append(y)
+
+        # permutation tst
+        _, permutation_score, pvalue = permutation_test_score(clf, this_X_std, y, cv=cv)
+        permutation_scores[sample_index, :] = permutation_score
+        
+    return mean_scores, y_pred_all, y_true_all, permutation_scores
+
+def get_permutation_quantiles(permutation_scores):
+    percentile_01 = np.quantile(permutation_scores, 0.01, axis=1)
+    percentile_99 = np.quantile(permutation_scores, 0.99, axis=1)
+
+    return percentile_01, percentile_99
+
+def plot_classification(times, mean_scores, permutation_scores, title=None, savepath=None):
+    # get permutation quantiles
+    percentile_01, percentile_99 = get_permutation_quantiles(permutation_scores)
+
     # Set figure size for better aspect ratio
     fig, ax = plt.subplots(figsize=(8, 6))
     
     # Plot data in greyscale
     ax.plot(times, mean_scores, 'k-', linewidth=1.5, label='Mean Scores')
+
+    # Plot permutation scores
+    ax.fill_between(times, percentile_01, percentile_99, color = "lightgray", alpha=0.55)
     
     # Add a dashed line at y=0.5
-    ax.hlines(0.50, times[0], times[-1], linestyle='dashed', color='grey', linewidth=0.75)
+    ax.hlines(0.50, times[0], times[-1], linestyle='dashed', color='red', linewidth=0.75)
     
     # Set labels, title and grid
     ax.set_ylabel('Proportion classified correctly', fontsize=14)

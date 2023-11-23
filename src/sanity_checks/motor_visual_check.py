@@ -75,7 +75,7 @@ def main():
     triggers = [11, 21, 23]
 
     # complete simple classification
-    classification = simple_classification(
+    mean_scores, y_pred_all, y_true_all, permutation_scores = simple_classification(
                                 X=X, 
                                 y=y, 
                                 triggers=triggers,
@@ -86,6 +86,7 @@ def main():
     plot_classification(
         times = times, 
         mean_scores = classification, 
+        permutation_scores = permutation_scores,
         title = f"Motor vs visual activation in precentral gyrus (lh)",
         savepath = plot_path / f"{label}_{triggers}.png"
     )
