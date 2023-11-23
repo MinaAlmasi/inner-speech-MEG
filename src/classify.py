@@ -92,9 +92,9 @@ def main():
     first_epochs = list(epochs_dict.values())[0]
     times = first_epochs.times
 
-    # select triggers for positive
+    # select triggers for positive vs negative
     triggers = [11, 21, 12, 22]
-    # triggers = [11, 12] # NB. remember to remove combine also in simple_classification!!!
+    # triggers = [11, 12] # triggers for only self_conditions. NB. remember to remove combine also in simple_classification!!!
 
     # complete simple classification
     mean_scores, y_pred_all, y_true_all, permutation_scores = simple_classification(
@@ -103,7 +103,8 @@ def main():
                                 triggers=triggers,
                                 penalty='l2', 
                                 C=1e-3, 
-                                combine=[[11, 21], [12, 22]]) # combines the two positive triggers
+                                combine=[[11, 21], [12, 22]] # combines the two positive triggers
+                                ) 
     
     plot_classification(
         times = times, 
